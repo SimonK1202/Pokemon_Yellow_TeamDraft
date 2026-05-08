@@ -1,0 +1,9 @@
+# Local virtual environment
+.venv/
+
+# PyCharm metadata
+.idea/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
