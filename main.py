@@ -1,17 +1,17 @@
-# This is a sample Python script.
+import json
+from models import Pokemon
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+def load_pokemon_library():
+    try:
+        with open("pokemon_library.json", "r") as file:
+            data = json.load(file)
+            # Convert dictionary items into a list of Pokemon Objects
+            return [Pokemon(k, v["name"], v["types"], v["base_stats"]) for k, v in data.items()]
+    except FileNotFoundError:
+        print("Data file not found.")
+        return []
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
-# Hello World
+if __name__ == "__main__":
+    pokemon_library_list = load_pokemon_library()
+    for poke in pokemon_library_list:
+        print(poke)
