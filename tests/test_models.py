@@ -1,6 +1,6 @@
 import pytest
 import json
-from models import Pokemon
+from models import PokemonBase, PokemonInstance
 
 
 def test_pokemon_initialization():
@@ -8,7 +8,7 @@ def test_pokemon_initialization():
     sample_stats = {"hp": 50, "attack": 50, "defense": 50, "special": 50, "speed": 50}
 
     # Act: Create a Pokemon object
-    pika = Pokemon("025", "Pikachu", ["Electric"], sample_stats)
+    pika = PokemonBase("025", "Pikachu", ["Electric"], sample_stats)
 
     # Assert: Check if the object is what we expect
     assert pika.name == "Pikachu"
@@ -46,3 +46,24 @@ def test_library_schema():
         for stat_name, value in stats.items():
             assert isinstance(value, int)
             assert value > 0, f"{stat_name} for {p_data['name']} must be positive."
+
+
+def test_pokemon_instance_stat_calculation():
+    # 1. Create a dummy base (using Pikachu's actual Gen 1 base stats)
+    pikachu_base = PokemonBase(
+        p_id="025",
+        name="Pikachu",
+        types=["Electric"],
+        base_stats={"hp": 35, "attack": 55, "defense": 30, "special": 50, "speed": 90}
+    )
+
+    # 2. Instantiate a Level 50 Pikachu
+    pika_lv50 = PokemonInstance(base_pokemon=pikachu_base, level=50)
+
+    # 3. Assert the math matches Gen 1 expectations
+    # HP: int((35 * 2 * 50) / 100) + 50 + 10 = 35 + 50 + 10 = 95
+    assert pika_lv50.max_hp == 95
+
+    # Attack: int((55 * 2 * 50) / 100) + 5 = 55 + 5 = 60
+    assert pika_lv50.stats["attack"] == 60
+    assert pika_lv50.stats["speed"] == 95
