@@ -17,7 +17,7 @@ def test_pokemon_initialization():
 
 
 def test_library_schema():
-    with open("pokemon_library.json", "r") as file:
+    with open("pokemon_gen_01.json", "r") as file:
         data = json.load(file)
 
     expected_stats = {"hp", "attack", "defense", "special", "speed"}

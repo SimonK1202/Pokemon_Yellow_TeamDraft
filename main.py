@@ -3,7 +3,7 @@ from models import Pokemon
 
 def load_pokemon_library():
     try:
-        with open("pokemon_library.json", "r") as file:
+        with open("pokemon_gen_01.json", "r") as file:
             data = json.load(file)
             # Convert dictionary items into a list of Pokemon Objects
             return [Pokemon(k, v["name"], v["types"], v["base_stats"]) for k, v in data.items()]
