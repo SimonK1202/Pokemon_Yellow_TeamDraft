@@ -1,3 +1,8 @@
+import logging
+
+# Configure basic logging layout (this usually goes in your entry point, but we'll set it here)
+logger = logging.getLogger("TeamDraftLogger")
+
 class PokemonBase:
     """
     Represents a single Pokémon with its base stats from the library.
@@ -57,3 +62,73 @@ class PokemonInstance:
             'special_attack': int((self.base.special_attack * 2 * self.level) / 100) + 5,
             'special_defense': int((self.base.special_defense * 2 * self.level) / 100) + 5
         }
+
+
+class PokemonTeam:
+    """A collection of drafted Pokémon organized into 6 fixed positional slots with built-in logging."""
+
+    def __init__(self, name: str):
+        self.name: str = name
+        self.pokemon_slots: dict[int, PokemonInstance | None] = {
+            1: None,
+            2: None,
+            3: None,
+            4: None,
+            5: None,
+            6: None
+        }
+
+    def add_pokemon(self, pokemon: PokemonInstance, position: int | None = None) -> None:
+        """
+        Adds a Pokémon to a slot. If no slot/position is specified, the first free is taken.
+        Does not extend the current team size.
+        Logs and raises ValueError if the team is full or the slot is unavailable.
+        """
+        # Case 1: Specific position requested
+        if position is not None:
+            if position not in self.pokemon_slots:
+                msg = f"Team '{self.name}': Invalid position {position}. Slot must be between 1 and 6."
+                logger.error(msg)
+                raise ValueError(msg)
+            if self.pokemon_slots[position] is not None:
+                msg = f"Team '{self.name}': Position {position} is already occupied by {self.pokemon_slots[position].base.name}."
+                logger.warning(msg)
+                raise ValueError(msg)
+
+            self.pokemon_slots[position] = pokemon
+            logger.info(f"Team '{self.name}': Successfully added {pokemon.base.name} to position {position}.")
+            return
+
+        # Case 2: Default to first open slot
+        for slot in range(1, 6):
+            if self.pokemon_slots[slot] is None:
+                self.pokemon_slots[slot] = pokemon
+                logger.info(
+                    f"Team '{self.name}': Successfully added {pokemon.base.name} to first open position ({slot}).")
+                return
+
+        msg = f"Team '{self.name}': Cannot add {pokemon.base.name}. Team is completely full."
+        logger.warning(msg)
+        raise ValueError(msg)
+
+    def remove_pokemon(self, position: int) -> None:
+        """
+        Clears whatever Pokémon is occupying the specified position slot (1-6).
+        Logs and raises ValueError if the position is out of bounds or already empty.
+        """
+        if position not in self.pokemon_slots:
+            msg = f"Team '{self.name}': Invalid position {position}. Slot must be between 1 and 6."
+            logger.error(msg)
+            raise ValueError(msg)
+        if self.pokemon_slots[position] is None:
+            msg = f"Team '{self.name}': Cannot remove Pokémon. Position {position} is already empty."
+            logger.warning(msg)
+            raise ValueError(msg)
+
+        removed_poke = self.pokemon_slots[position]
+        self.pokemon_slots[position] = None
+        logger.info(f"Team '{self.name}': Successfully removed {removed_poke.base.name} from position {position}.")
+
+    def __repr__(self) -> str:
+        filled_slots = sum(1 for slot in self.pokemon_slots.values() if slot is not None)
+        return f"Team(Name: {self.name}, Filled Slots: {filled_slots}/6)"
