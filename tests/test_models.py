@@ -21,7 +21,7 @@ def test_pokemon_initialization():
     assert "Electric" in pika.types
 
 
-@pytest.mark.parametrize("gen_number", [1])
+@pytest.mark.parametrize("gen_number", [1, 2])
 def test_library_schema(gen_number):
     # Dynamically build the file path using the format specifier
     filename = f"pokemon_gen_{gen_number:02d}.json"
