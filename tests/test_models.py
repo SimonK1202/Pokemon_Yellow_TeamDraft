@@ -1,6 +1,8 @@
 import pytest
 import json
-from models import PokemonBase, PokemonInstance
+import logging
+from unittest.mock import MagicMock
+from models import PokemonBase, PokemonInstance, PokemonTeam
 
 
 def test_pokemon_initialization():
@@ -97,3 +99,85 @@ def test_pokemon_instance_stat_calculation():
 
     # 4. Assert Gen 1 held item constraint is enforced
     assert pika_lv50.item is None
+
+
+@pytest.fixture
+def mock_pokemon():
+    """Provides a dummy PokemonInstance mock to avoid loading JSONs for team tests."""
+    mock_poke = MagicMock()
+    mock_poke.base.name = "Pikachu"
+    return mock_poke
+
+
+@pytest.fixture
+def empty_team():
+    """Provides a fresh, empty PokemonTeam for every test execution."""
+    return PokemonTeam(name="Pallet Town Challengers")
+
+
+### 1. Test Add Functionality
+def test_add_pokemon_first_available_slot(empty_team, mock_pokemon):
+    """Verifies that adding a Pokémon defaults to filling the first open numerical slot."""
+    empty_team.add_pokemon(mock_pokemon)
+    assert empty_team.pokemon_slots[1] is mock_pokemon
+    assert empty_team.pokemon_slots[2] is None
+
+
+def test_add_pokemon_specific_slot(empty_team, mock_pokemon):
+    """Verifies that passing an explicit position argument locks the Pokémon to that spot."""
+    empty_team.add_pokemon(mock_pokemon, position=4)
+    assert empty_team.pokemon_slots[4] is mock_pokemon
+    assert empty_team.pokemon_slots[1] is None
+
+
+### 2. Test Roster Size Guardrails (Strictly at most 6)
+def test_add_pokemon_to_completely_full_team(empty_team, mock_pokemon):
+    """Verifies that a team caps out at 6 and throws a ValueError on the 7th attempt."""
+    # Fill up all 6 positions
+    for _ in range(6):
+        empty_team.add_pokemon(mock_pokemon)
+
+    # Verify the 7th add raises a ValueError
+    with pytest.raises(ValueError) as exc_info:
+        empty_team.add_pokemon(mock_pokemon)
+
+    # FORCE the exception value to a pure string before running assertions
+    error_message = str(exc_info.value)
+
+    assert "Team is completely full" in error_message
+
+
+def test_add_pokemon_invalid_out_of_bounds_slot(empty_team, mock_pokemon):
+    """Verifies that passing a slot number outside of 1-6 raises an explicit ValueError."""
+    with pytest.raises(ValueError) as exc_info:
+        empty_team.add_pokemon(mock_pokemon, position=7)
+
+    assert "Slot must be between 1 and 6" in str(exc_info.value)
+
+
+def test_add_pokemon_slot_already_occupied(empty_team, mock_pokemon):
+    """Verifies that attempting to overwrite an occupied slot raises an error."""
+    empty_team.add_pokemon(mock_pokemon, position=3)
+
+    with pytest.raises(ValueError) as exc_info:
+        empty_team.add_pokemon(mock_pokemon, position=3)
+
+    assert "already occupied" in str(exc_info.value)
+
+
+### 3. Test Remove Functionality
+def test_remove_pokemon_successfully(empty_team, mock_pokemon):
+    """Verifies that removing an item clears the specific numerical position."""
+    empty_team.add_pokemon(mock_pokemon, position=2)
+    assert empty_team.pokemon_slots[2] is mock_pokemon
+
+    empty_team.remove_pokemon(position=2)
+    assert empty_team.pokemon_slots[2] is None
+
+
+def test_remove_pokemon_from_already_empty_slot(empty_team):
+    """Verifies that attempting to clear an already vacant slot triggers an error gracefully."""
+    with pytest.raises(ValueError) as exc_info:
+        empty_team.remove_pokemon(position=5)
+
+    assert "already empty" in str(exc_info.value)

@@ -100,7 +100,7 @@ class PokemonTeam:
             return
 
         # Case 2: Default to first open slot
-        for slot in range(1, 6):
+        for slot in range(1, 7):
             if self.pokemon_slots[slot] is None:
                 self.pokemon_slots[slot] = pokemon
                 logger.info(
